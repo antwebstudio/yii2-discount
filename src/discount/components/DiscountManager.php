@@ -4,31 +4,39 @@ namespace ant\discount\components;
 use Yii;
 use ant\discount\helpers\Discount;
 use ant\discount\models\DiscountRule;
+use ant\discount\components\DiscountCalculator;
 
 class DiscountManager extends \yii\base\Component {
 	
 	public $overrideMethods = [];
-	public $rules;
+	public $rules = [];
 	
-	public function getRules() {
-		if (!isset($this->rules)) {
-			$this->rules = \ant\discount\models\DiscountRule::find()->all();
-		}
-		$rules = [];
-		foreach ($this->rules as $rule) {
-			if ($rule instanceof \ant\discount\models\DiscountRule) {
-				$rules[] = Yii::createObject([
-					'class' => $rule->class,
-					'discount_percent' => $rule->discount_percent,
-					'users' => $rule->user_ids,
-					'products' => $rule->product_ids,
-					'categories' => $rule->category_ids,
-				]);
-			} else {
+	protected $_initRules = false;
+	protected $_calculator;
+	protected $_context = [];
+	
+	public function setContext($name, $value) {
+		$this->_context[$name] = $value;
+	}
+	
+	public function getCalculator() {
+		if (!isset($this->_calculator)) {
+			$rules = [];
+			
+			// Init set rules
+			foreach ($this->rules as $rule) {
 				$rules[] = Yii::createObject($rule);
 			}
+			
+			// Load db rules
+			$dbRules = \ant\discount\models\DiscountRule::find()->all();
+			foreach ($dbRules as $rule) {
+				$rules[] = $rule->getRule();
+			}
+			
+			$this->_calculator = DiscountCalculator::with($this->_context)->addRules($rules);
 		}
-		return $rules;
+		return $this->_calculator;
 	}
 	
 	public function getDiscountForForm($formModel) {
@@ -69,23 +77,14 @@ class DiscountManager extends \yii\base\Component {
 		if (isset($this->overrideMethods['getDiscountForCart']) && is_callable($this->overrideMethods['getDiscountForCart'])) {
 			return call_user_func_array($this->overrideMethods['getDiscountForCart'], [$cart]);
 		}
-		
-		$total = 0;
-		foreach ($this->getRules() as $rule) {
-			$total += $rule->getDiscountForCart($cart);
-		}
-		return Discount::amount($total);
+		$this->calculator->cart = $cart;
+		return $this->calculator->getCartDiscount();
 	}
 	
 	public function getDiscountForCartItem($cartItem) {
 		if (isset($this->overrideMethods['getDiscountForCartItem']) && is_callable($this->overrideMethods['getDiscountForCartItem'])) {
 			return call_user_func_array($this->overrideMethods['getDiscountForCartItem'], [$cartItem]);
 		}
-		
-		$total = 0;
-		foreach ($this->getRules() as $rule) {
-			$total += $rule->getDiscountForCartItem($cartItem);
-		}
-		return Discount::amount($total);
+		return $this->calculator->getCartItemDiscount($cartItem);
 	}
 }

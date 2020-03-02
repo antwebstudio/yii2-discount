@@ -3,6 +3,7 @@
 namespace ant\discount\models;
 
 use Yii;
+use ant\models\ModelClass;
 
 /**
  * This is the model class for table "em_discount_rule".
@@ -41,7 +42,7 @@ class DiscountRule extends \yii\db\ActiveRecord
             [
                 'class' => \ant\behaviors\SerializeBehavior::className(),
 				'serializeMethod' => \ant\behaviors\SerializeBehavior::METHOD_JSON,
-                'attributes' => ['user_ids', 'product_ids', 'category_ids']
+                'attributes' => ['user_ids', 'product_ids', 'category_ids', 'setting']
             ],
 		];
 	}
@@ -60,14 +61,32 @@ class DiscountRule extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['class', 'priority'], 'required'],
+            [['class_id'], 'required'],
             [['priority', 'status', 'created_by', 'updated_by'], 'integer'],
             [['discount_amount', 'discount_percent'], 'number'],
             [['created_at', 'updated_at'], 'safe'],
-            [['class'], 'string', 'max' => 512],
-            [['code'], 'string', 'max' => 50],
+            [['class_id'], 'number'],
         ];
     }
+	
+	public static function createFrom($rule) {
+		$model = new self;
+		$model->class_id = ModelClass::getClassId($rule);
+		$model->setting = Yii::getObjectVars($rule);
+		
+		return $model;
+	}
+	
+	public function getRule() {
+		$settings = $this->setting;
+		$settings['class'] = ModelClass::getClassName($this->class_id);
+		$settings['discount_percent'] = $this->discount_percent;
+		$settings['users'] = $this->user_ids;
+		$settings['products'] = $this->product_ids;
+		$settings['categories'] = $this->category_ids;
+		
+		return Yii::createObject($settings);
+	}
 
     /**
      * @inheritdoc
