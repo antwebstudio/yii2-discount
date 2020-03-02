@@ -7,6 +7,7 @@ use ant\discount\models\DiscountRule;
 use ant\discount\components\DiscountCalculator;
 
 class DiscountManager extends \yii\base\Component {
+	const SESSION_NAME = 'discount_manager';
 	
 	public $overrideMethods = [];
 	public $rules = [];
@@ -15,8 +16,34 @@ class DiscountManager extends \yii\base\Component {
 	protected $_calculator;
 	protected $_context = [];
 	
-	public function setContext($name, $value) {
+	public function init() {
+		$this->loadContextFromSession();
+	}
+	
+	protected function loadContextFromSession() {
+		$params = (array) Yii::$app->session->get(self::SESSION_NAME);
+		foreach ($params as $name => $value) {
+			if ($name != 'coupon')
+			$this->_context[$name] = $value;
+		}
+	}
+	
+	public function setContext($name, $value, $saveToSession = false) {
 		$this->_context[$name] = $value;
+		
+		if ($saveToSession) {
+			$params = Yii::$app->session->get(self::SESSION_NAME);
+			$params[$name] = $value;
+			
+			Yii::$app->session->set(self::SESSION_NAME, $params);
+		}
+	}
+	
+	public function getContext($name) {
+		return isset($this->_context[$name]) ? $this->_context[$name] : null;
+		
+		//$params = Yii::$app->session->get(self::SESSION_NAME);
+		//return isset($params[$name]) ? $params[$name] : null;
 	}
 	
 	public function getCalculator() {

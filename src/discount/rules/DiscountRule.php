@@ -23,8 +23,21 @@ class DiscountRule extends \yii\base\Component {
 	
 	public $code;
 	
+	public $ruleId;
+	
 	public function setContext($context) {
 		$this->context = $context;
+		return;
+		throw new \Exception('t');
+		throw new \Exception(print_r($context,1));
+		
+		foreach ($context as $name => $value) {
+			try {
+				$this->context[$name] = $value;	
+			} catch (\Exception $es) {
+				
+			}
+		}
 	}
 
 	public function getIsShouldApply() {

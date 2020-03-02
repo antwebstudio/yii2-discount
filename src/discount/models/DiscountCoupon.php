@@ -39,6 +39,19 @@ class DiscountCoupon extends \yii\db\ActiveRecord
 		
 		return $model;
 	}
+	
+	public function saveWithRule($rule, $attributes = []) {
+		$rule = DiscountRule::createFrom($rule);
+		$rule->attributes = $attributes;
+		
+		if (!$rule->save()) throw new \Exception(print_r($rule->errors, 1));
+		
+		$this->rule_id = $rule->id;
+		
+		if (!$this->save()) throw new \Exception(print_r($this->errors, 1));
+		
+		return $this;
+	}
 
     /**
      * {@inheritdoc}

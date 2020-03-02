@@ -19,6 +19,7 @@ class M200301095942AlterDiscountRule extends Migration
 		$this->alterColumn($this->tableName, 'class_id', $this->morphClass());
 		$this->dropColumn($this->tableName, 'code');
 		$this->addColumn($this->tableName, 'setting', $this->text());
+		$this->addColumn($this->tableName, 'name', $this->string()->null()->defaultValue(null));
 		$this->alterColumn($this->tableName, 'priority', $this->smallInteger(3)->notNull()->defaultValue(0));
     }
 
@@ -31,6 +32,7 @@ class M200301095942AlterDiscountRule extends Migration
 		$this->renameColumn($this->tableName, 'class_id', 'class');
 		$this->addColumn($this->tableName, 'code', $this->string(50)->defaultValue(NULL));
 		$this->dropColumn($this->tableName, 'setting');
+		$this->dropColumn($this->tableName, 'name');
 		$this->alterColumn($this->tableName, 'priority', $this->smallInteger(3)->notNull());
     }
 

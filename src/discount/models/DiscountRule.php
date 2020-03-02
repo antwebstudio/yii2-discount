@@ -37,7 +37,7 @@ class DiscountRule extends \yii\db\ActiveRecord
 				'class' => \ant\behaviors\TimestampBehavior::className(),
 			],
 			[
-				'class' => \yii\behaviors\BlameableBehavior::className(),
+				'class' => \ant\behaviors\BlameableBehavior::className(),
 			],
             [
                 'class' => \ant\behaviors\SerializeBehavior::className(),
@@ -73,6 +73,8 @@ class DiscountRule extends \yii\db\ActiveRecord
 		$model = new self;
 		$model->class_id = ModelClass::getClassId($rule);
 		$model->setting = Yii::getObjectVars($rule);
+		$model->discount_amount = isset($rule->amount) ? $rule->amount : 0;
+		$model->discount_percent = isset($rule->percent) ? $rule->percent : 0;
 		
 		return $model;
 	}
@@ -84,6 +86,7 @@ class DiscountRule extends \yii\db\ActiveRecord
 		$settings['users'] = $this->user_ids;
 		$settings['products'] = $this->product_ids;
 		$settings['categories'] = $this->category_ids;
+		$settings['ruleId'] = $this->id;
 		
 		return Yii::createObject($settings);
 	}
